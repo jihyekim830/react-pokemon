@@ -1,8 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getPokemonById, getPokemons } from '@features/pokemon/pokemonThunk';
+import { getPokemonById, getPokemonList } from '@features/pokemon/pokemonThunk';
 
 const initialState = {
-  pokemons: { data: [], loading: false, error: null },
+  pokemonList: { data: [], loading: false, error: null },
   selectedPokemon: { data: null, loading: false, error: null },
 };
 
@@ -12,45 +12,81 @@ const pokemonSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // getPokemons
-      .addCase(getPokemons.pending, (state) => {
-        state.pokemons.loading = true;
-        state.pokemons.error = null;
-      })
-      .addCase(getPokemons.fulfilled, (state, action) => {
-        state.pokemons.data = action.payload;
-        state.pokemons.loading = false;
-      })
-      .addCase(getPokemons.rejected, (state, action) => {
-        const message = formatErrorMessage({ err: action.error });
-
-        state.pokemons.error = { message };
-        state.pokemons.loading = false;
-      })
+      // getPokemonList
+      .addCase(
+        getPokemonList.pending,
+        createAsyncCaseHandler({
+          stateKey: 'pokemonList',
+          status: 'pending',
+        }),
+      )
+      .addCase(
+        getPokemonList.fulfilled,
+        createAsyncCaseHandler({
+          stateKey: 'pokemonList',
+          status: 'fulfilled',
+        }),
+      )
+      .addCase(
+        getPokemonList.rejected,
+        createAsyncCaseHandler({
+          stateKey: 'pokemonList',
+          status: 'rejected',
+        }),
+      )
 
       // getPokemonById
-      .addCase(getPokemonById.pending, (state) => {
-        state.selectedPokemon.loading = true;
-        state.selectedPokemon.error = null;
-      })
-      .addCase(getPokemonById.fulfilled, (state, action) => {
-        state.selectedPokemon.data = action.payload;
-        state.selectedPokemon.loading = false;
-      })
-      .addCase(getPokemonById.rejected, (state, action) => {
-        const message = formatErrorMessage({ err: action.error });
-
-        state.selectedPokemon.error = { message };
-        state.selectedPokemon.loading = false;
-      });
+      .addCase(
+        getPokemonById.pending,
+        createAsyncCaseHandler({
+          stateKey: 'selectedPokemon',
+          status: 'pending',
+        }),
+      )
+      .addCase(
+        getPokemonById.fulfilled,
+        createAsyncCaseHandler({
+          stateKey: 'selectedPokemon',
+          status: 'fulfilled',
+        }),
+      )
+      .addCase(
+        getPokemonById.rejected,
+        createAsyncCaseHandler({
+          stateKey: 'selectedPokemon',
+          status: 'rejected',
+        }),
+      );
   },
 });
 
-function formatErrorMessage({ err }) {
-  if (!err.message)
-    return '예기치 않은 오류가 발생했습니다.\n잠시 후에 다시 시도해 주세요.';
-  else if (!err.code) return err.message;
-  else return `${err.code}: ${err.message}`;
+function createAsyncCaseHandler({ stateKey, status }) {
+  switch (status) {
+    case 'pending':
+      return (state) => {
+        state[stateKey].loading = true;
+        state[stateKey].error = null;
+      };
+    case 'fulfilled':
+      return (state, action) => {
+        state[stateKey].data = action.payload;
+        state[stateKey].loading = false;
+      };
+
+    case 'rejected':
+      return (state, action) => {
+        const message = action.payload.message;
+
+        state[stateKey].error = { message };
+        state[stateKey].loading = false;
+      };
+
+    default:
+      return (state) => {
+        state[stateKey].error = { message: `${status}: Invalid type` };
+        state[stateKey].loading = false;
+      };
+  }
 }
 
 export default pokemonSlice.reducer;

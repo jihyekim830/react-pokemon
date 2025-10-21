@@ -1,17 +1,16 @@
-import { Link, Outlet } from 'react-router';
+import { Suspense } from 'react';
+import { Outlet } from 'react-router';
+import { Header } from '@components';
+import { Indicator } from '@components';
 
 function MainLayout() {
   return (
     <>
-      <header>
-        <nav>
-          <Link to="/">Main</Link>
-          <Link to="/search">Search</Link>
-          <Link to="/favorite">Favorite</Link>
-        </nav>
-      </header>
-      <main>
-        <Outlet />
+      <Header />
+      <main className="py-2">
+        <Suspense fallback={<Indicator />}>
+          <Outlet />
+        </Suspense>
       </main>
     </>
   );
